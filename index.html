@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab QA Distilled Water Assessment</title>
+    <style>
+      :root {
+        --bg: #edf5ff;
+        --panel: #ffffff;
+        --primary: #0d6efd;
+        --primary-dark: #083d7a;
+        --text: #17324d;
+        --muted: #5d7288;
+        --border: #d7e8ff;
+        --success: #1f9d69;
+        --warning: #d97706;
+        --danger: #c0392b;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: Arial, Helvetica, sans-serif;
+        background: linear-gradient(135deg, #edf5ff, #dfeaff);
+        color: var(--text);
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 32px auto;
+        padding: 24px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .header h1 {
+        margin: 0 0 10px;
+        color: #0d3b66;
+        font-size: 2.2rem;
+      }
+
+      .header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+
+      .panel {
+        background: rgba(255,255,255,0.9);
+        padding: 24px;
+        border-radius: 18px;
+        box-shadow: 0 16px 35px rgba(22, 48, 70, 0.08);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 18px;
+      }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .field label {
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: #23415d;
+      }
+
+      .field input,
+      .field select {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 12px 14px;
+        font-size: 1rem;
+        background: #f9fbff;
+        color: var(--text);
+      }
+
+      .full { grid-column: 1 / -1; }
+
+      .actions {
+        margin-top: 20px;
+      }
+
+      button {
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 12px 22px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        filter: brightness(1.05);
+      }
+
+      .alert {
+        margin-top: 18px;
+        border-radius: 12px;
+        padding: 12px 16px;
+        display: none;
+        font-weight: 700;
+      }
+
+      .alert.error {
+        background: #fff0f0;
+        border: 1px solid #f2b4b4;
+        color: var(--danger);
+      }
+
+      .result {
+        margin-top: 30px;
+      }
+
+      .result-card {
+        background: rgba(255,255,255,0.9);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 16px 35px rgba(22, 48, 70, 0.08);
+      }
+
+      .result h2 {
+        margin-top: 0;
+        color: #102e4a;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 16px;
+        margin: 18px 0 24px;
+      }
+
+      .stat {
+        background: #eef7ff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px;
+      }
+
+      .stat-label {
+        display: block;
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .result-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 22px;
+      }
+
+      .group h3 {
+        color: #112f4c;
+        margin-top: 0;
+      }
+
+      ul {
+        padding-left: 18px;
+        margin: 10px 0 0;
+      }
+
+      li {
+        margin-bottom: 8px;
+      }
+
+      .recommendations {
+        margin-top: 22px;
+      }
+
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Lab QA Distilled Water Assessment</h1>
+        <p>Category and quality evaluation for purified water samples</p>
+      </header>
+
+      <div class="panel">
+        <form id="assessmentForm">
+          <div class="grid">
+            <div class="field">
+              <label for="ph_level">pH Level</label>
+              <input id="ph_level" type="number" step="0.01" value="6.0" required />
+            </div>
+
+            <div class="field">
+              <label for="electrical_conductivity">Electrical Conductivity (µS/cm)</label>
+              <input id="electrical_conductivity" type="number" step="0.01" value="3.5" required />
+            </div>
+
+            <div class="field">
+              <label for="total_dissolved_solids">Total Dissolved Solids (mg/L)</label>
+              <input id="total_dissolved_solids" type="number" step="0.01" value="1.8" required />
+            </div>
+
+            <div class="field">
+              <label for="turbidity">Turbidity (NTU)</label>
+              <input id="turbidity" type="number" step="0.01" value="0.05" required />
+            </div>
+
+            <div class="field">
+              <label for="chloride_content">Chloride Content (mg/L)</label>
+              <input id="chloride_content" type="number" step="0.01" value="0.08" required />
+            </div>
+
+            <div class="field">
+              <label for="heavy_metal_concentration">Heavy Metal Concentration (mg/L)</label>
+              <input id="heavy_metal_concentration" type="number" step="0.001" value="0.0005" required />
+            </div>
+
+            <div class="field">
+              <label for="microbial_count">Microbial Count (CFU/mL)</label>
+              <input id="microbial_count" type="number" step="1" value="5" required />
+            </div>
+
+            <div class="field">
+              <label for="organic_matter_content">Organic Matter Content (mg/L)</label>
+              <input id="organic_matter_content" type="number" step="0.01" value="0.30" required />
+            </div>
+
+            <div class="field full">
+              <label for="category">Target Category</label>
+              <select id="category">
+                <option value="">Auto-detect</option>
+                <option value="Pharmaceutical Grade">Pharmaceutical Grade</option>
+                <option value="Laboratory Grade">Laboratory Grade</option>
+                <option value="Food Grade">Food Grade</option>
+                <option value="Cosmetic Grade">Cosmetic Grade</option>
+                <option value="Industrial Grade">Industrial Grade</option>
+                <option value="Standard">Standard</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="submit">Run Assessment</button>
+          </div>
+        </form>
+
+        <div id="alert" class="alert error"></div>
+      </div>
+
+      <section id="resultSection" class="result hidden">
+        <div class="result-card">
+          <h2>Assessment Result</h2>
+
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-label">Category</span>
+              <strong id="resultCategory">-</strong>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Grade</span>
+              <strong id="resultGrade">-</strong>
+            </div>
+            <div class="stat">
+              <span class="stat-label">Score</span>
+              <strong id="resultScore">-</strong>
+            </div>
+          </div>
+
+          <div class="result-grid">
+            <div class="group">
+              <h3>Passing Parameters</h3>
+              <ul id="passingList"></ul>
+            </div>
+
+            <div class="group">
+              <h3>Failing Parameters</h3>
+              <ul id="failingList"></ul>
+            </div>
+          </div>
+
+          <div class="recommendations group">
+            <h3>Recommendations</h3>
+            <ul id="recommendationsList"></ul>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const standards = {
+        'Pharmaceutical Grade': {
+          phMin: 5.5, phMax: 6.5,
+          ecMax: 5.1,
+          tdsMax: 2.5,
+          turbidityMax: 0.1,
+          chlorideMax: 0.10,
+          heavyMetalMax: 0.001,
+          microbialMax: 10,
+          organicMax: 0.5
+        },
+        'Laboratory Grade': {
+          phMin: 5.0, phMax: 7.0,
+          ecMax: 10.0,
+          tdsMax: 5.0,
+          turbidityMax: 0.5,
+          chlorideMax: 0.5,
+          heavyMetalMax: 0.01,
+          microbialMax: 100,
+          organicMax: 1.0
+        },
+        'Food Grade': {
+          phMin: 6.0, phMax: 7.5,
+          ecMax: 50.0,
+          tdsMax: 25.0,
+          turbidityMax: 1.0,
+          chlorideMax: 1.0,
+          heavyMetalMax: 0.05,
+          microbialMax: 1000,
+          organicMax: 2.0
+        },
+        'Cosmetic Grade': {
+          phMin: 5.5, phMax: 7.5,
+          ecMax: 75.0,
+          tdsMax: 50.0,
+          turbidityMax: 2.0,
+          chlorideMax: 2.0,
+          heavyMetalMax: 0.1,
+          microbialMax: 5000,
+          organicMax: 3.0
+        },
+        'Industrial Grade': {
+          phMin: 4.0, phMax: 8.0,
+          ecMax: 200.0,
+          tdsMax: 100.0,
+          turbidityMax: 5.0,
+          chlorideMax: 5.0,
+          heavyMetalMax: 0.5,
+          microbialMax: 50000,
+          organicMax: 5.0
+        },
+        'Standard': {
+          phMin: 3.0, phMax: 9.0,
+          ecMax: 500.0,
+          tdsMax: 250.0,
+          turbidityMax: 10.0,
+          chlorideMax: 10.0,
+          heavyMetalMax: 1.0,
+          microbialMax: 100000,
+          organicMax: 10.0
+        }
+      };
+
+      const categoryOrder = [
+        'Pharmaceutical Grade',
+        'Laboratory Grade',
+        'Food Grade',
+        'Cosmetic Grade',
+        'Industrial Grade',
+        'Standard'
+      ];
+
+      function showAlert(message) {
+        const alertBox = document.getElementById('alert');
+        alertBox.textContent = message;
+        alertBox.style.display = 'block';
+      }
+
+      function hideAlert() {
+        document.getElementById('alert').style.display = 'none';
+      }
+
+      function calculateDeviationScore(value, minVal, maxVal) {
+        if (value < minVal) return Math.max(0, 100 - (minVal - value) * 10);
+        if (value > maxVal) return Math.max(0, 100 - (value - maxVal) * 10);
+        return 100;
+      }
+
+      function parameterScore(metricName, value, standard) {
+        switch (metricName) {
+          case 'pH Level':
+            return calculateDeviationScore(value, standard.phMin, standard.phMax);
+          case 'Electrical Conductivity':
+            return value <= standard.ecMax ? 100 : Math.max(0, 100 - (value - standard.ecMax) * 2);
+          case 'Total Dissolved Solids':
+            return value <= standard.tdsMax ? 100 : Math.max(0, 100 - (value - standard.tdsMax) * 2);
+          case 'Turbidity':
+            return value <= standard.turbidityMax ? 100 : Math.max(0, 100 - (value - standard.turbidityMax) * 5);
+          case 'Chloride Content':
+            return value <= standard.chlorideMax ? 100 : Math.max(0, 100 - (value - standard.chlorideMax) * 10);
+          case 'Heavy Metal Concentration':
+            return value <= standard.heavyMetalMax ? 100 : Math.max(0, 100 - (value - standard.heavyMetalMax) * 50);
+          case 'Microbial Count':
+            return value <= standard.microbialMax ? 100 : Math.max(0, 100 - ((value / standard.microbialMax) - 1) * 20);
+          case 'Organic Matter Content':
+            return value <= standard.organicMax ? 100 : Math.max(0, 100 - (value - standard.organicMax) * 10);
+          default:
+            return 100;
+        }
+      }
+
+      function getMatchingCategory(metrics) {
+        const scores = categoryOrder.map((categoryName) => {
+          const std = standards[categoryName];
+          let passes = 0;
+          let fails = 0;
+
+          const checks = [
+            { name: 'pH Level', value: metrics.ph_level, isPass: metrics.ph_level >= std.phMin && metrics.ph_level <= std.phMax },
+            { name: 'Electrical Conductivity', value: metrics.electrical_conductivity, isPass: metrics.electrical_conductivity <= std.ecMax },
+            { name: 'Total Dissolved Solids', value: metrics.total_dissolved_solids, isPass: metrics.total_dissolved_solids <= std.tdsMax },
+            { name: 'Turbidity', value: metrics.turbidity, isPass: metrics.turbidity <= std.turbidityMax },
+            { name: 'Chloride Content', value: metrics.chloride_content, isPass: metrics.chloride_content <= std.chlorideMax },
+            { name: 'Heavy Metal Concentration', value: metrics.heavy_metal_concentration, isPass: metrics.heavy_metal_concentration <= std.heavyMetalMax },
+            { name: 'Microbial Count', value: metrics.microbial_count, isPass: metrics.microbial_count <= std.microbialMax },
+            { name: 'Organic Matter Content', value: metrics.organic_matter_content, isPass: metrics.organic_matter_content <= std.organicMax }
+          ];
+
+          checks.forEach((item) => {
+            if (item.isPass) passes++; else fails++;
+          });
+
+          return { categoryName, score: passes - (fails * 2) };
+        });
+
+        scores.sort((a,b) => b.score - a.score);
+        return scores[0].categoryName;
+      }
+
+      function assessWater(metrics, categoryName) {
+        const targetCategory = categoryName || getMatchingCategory(metrics);
+        const standard = standards[targetCategory];
+        const passing = [];
+        const failing = [];
+        const scores = [];
+
+        const checks = [
+          { label: 'pH Level', value: metrics.ph_level, pass: metrics.ph_level >= standard.phMin && metrics.ph_level <= standard.phMax },
+          { label: 'Electrical Conductivity', value: metrics.electrical_conductivity, pass: metrics.electrical_conductivity <= standard.ecMax },
+          { label: 'Total Dissolved Solids', value: metrics.total_dissolved_solids, pass: metrics.total_dissolved_solids <= standard.tdsMax },
+          { label: 'Turbidity', value: metrics.turbidity, pass: metrics.turbidity <= standard.turbidityMax },
+          { label: 'Chloride Content', value: metrics.chloride_content, pass: metrics.chloride_content <= standard.chlorideMax },
+          { label: 'Heavy Metal Concentration', value: metrics.heavy_metal_concentration, pass: metrics.heavy_metal_concentration <= standard.heavyMetalMax },
+          { label: 'Microbial Count', value: metrics.microbial_count, pass: metrics.microbial_count <= standard.microbialMax },
+          { label: 'Organic Matter Content', value: metrics.organic_matter_content, pass: metrics.organic_matter_content <= standard.organicMax }
+        ];
+
+        checks.forEach((item) => {
+          const score = parameterScore(item.label, item.value, standard);
+          scores.push(score);
+          if (item.pass) passing.push(item.label); else failing.push(item.label);
+        });
+
+        const avgScore = scores.reduce((sum, n) => sum + n, 0) / scores.length;
+        const grade = avgScore >= 90 ? 'Excellent' : avgScore >= 75 ? 'Good' : avgScore >= 60 ? 'Acceptable' : avgScore >= 40 ? 'Poor' : 'Failed';
+
+        const recommendations = [];
+        if (failing.length === 0) {
+          recommendations.push('Water meets all standards for the selected category.');
+        } else {
+          failing.forEach((item) => {
+            const map = {
+              'pH Level': 'Adjust pH level using the correct buffer or neutralization method.',
+              'Electrical Conductivity': 'Improve deionization or distillation to reduce dissolved ions.',
+              'Total Dissolved Solids': 'Use additional filtration or reverse osmosis to lower dissolved solids.',
+              'Turbidity': 'Apply fine filtration or settling to remove suspended particles.',
+              'Chloride Content': 'Use ion exchange or additional purification to reduce chloride concentrations.',
+              'Heavy Metal Concentration': 'Install polishing or chelation treatment for heavy metal removal.',
+              'Microbial Count': 'Use UV sterilization or membrane filtration to reduce microbial load.',
+              'Organic Matter Content': 'Apply activated carbon filtration or oxidation treatment.'
+            };
+            recommendations.push(map[item] || 'Review the treatment system and re-test after correction.');
+          });
+        }
+
+        recommendations.push('Re-test after implementing corrective actions and document the results.');
+
+        return {
+          category: targetCategory,
+          grade,
+          score: avgScore,
+          passing,
+          failing,
+          recommendations
+        };
+      }
+
+      document.getElementById('assessmentForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+        hideAlert();
+
+        const metrics = {
+          ph_level: parseFloat(document.getElementById('ph_level').value),
+          electrical_conductivity: parseFloat(document.getElementById('electrical_conductivity').value),
+          total_dissolved_solids: parseFloat(document.getElementById('total_dissolved_solids').value),
+          turbidity: parseFloat(document.getElementById('turbidity').value),
+          chloride_content: parseFloat(document.getElementById('chloride_content').value),
+          heavy_metal_concentration: parseFloat(document.getElementById('heavy_metal_concentration').value),
+          microbial_count: parseInt(document.getElementById('microbial_count').value, 10),
+          organic_matter_content: parseFloat(document.getElementById('organic_matter_content').value)
+        };
+
+        if (Object.values(metrics).some((value) => Number.isNaN(value))) {
+          showAlert('Please enter valid numeric values for all fields.');
+          return;
+        }
+
+        const selectedCategory = document.getElementById('category').value;
+        const result = assessWater(metrics, selectedCategory);
+
+        document.getElementById('resultCategory').textContent = result.category;
+        document.getElementById('resultGrade').textContent = result.grade;
+        document.getElementById('resultScore').textContent = `${result.score.toFixed(1)}/100`;
+
+        const passingList = document.getElementById('passingList');
+        const failingList = document.getElementById('failingList');
+        const recommendationsList = document.getElementById('recommendationsList');
+
+        passingList.innerHTML = result.passing.length
+          ? result.passing.map((item) => `<li>${item}</li>`).join('')
+          : '<li>None</li>';
+
+        failingList.innerHTML = result.failing.length
+          ? result.failing.map((item) => `<li>${item}</li>`).join('')
+          : '<li>None</li>';
+
+        recommendationsList.innerHTML = result.recommendations.map((item) => `<li>${item}</li>`).join('');
+
+        document.getElementById('resultSection').classList.remove('hidden');
+      });
+    </script>
+  </body>
+</html>
