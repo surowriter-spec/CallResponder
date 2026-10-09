@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lab QA Water Assessment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1>Lab QA: Distilled Water Assessment</h1>
+        <p>Evaluate purity, contamination, and category compliance</p>
+      </header>
+
+      <form method="POST" action="/assess" class="form-card">
+        <div class="grid">
+          <label>
+            pH Level
+            <input type="number" step="0.01" name="ph_level" value="6.0" required />
+          </label>
+
+          <label>
+            Electrical Conductivity (µS/cm)
+            <input type="number" step="0.01" name="electrical_conductivity" value="3.5" required />
+          </label>
+
+          <label>
+            Total Dissolved Solids (mg/L)
+            <input type="number" step="0.01" name="total_dissolved_solids" value="1.8" required />
+          </label>
+
+          <label>
+            Turbidity (NTU)
+            <input type="number" step="0.01" name="turbidity" value="0.05" required />
+          </label>
+
+          <label>
+            Chloride Content (mg/L)
+            <input type="number" step="0.01" name="chloride_content" value="0.08" required />
+          </label>
+
+          <label>
+            Heavy Metal Concentration (mg/L)
+            <input type="number" step="0.001" name="heavy_metal_concentration" value="0.0005" required />
+          </label>
+
+          <label>
+            Microbial Count (CFU/mL)
+            <input type="number" step="1" name="microbial_count" value="5" required />
+          </label>
+
+          <label>
+            Organic Matter Content (mg/L)
+            <input type="number" step="0.01" name="organic_matter_content" value="0.30" required />
+          </label>
+
+          <label class="full-width">
+            Target Category
+            <select name="category">
+              <option value="">Auto-detect</option>
+              {% for category in categories %}
+              <option value="{{ category }}">{{ category }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </div>
+
+        <button type="submit">Run Lab QA Assessment</button>
+      </form>
+
+      {% if error %}
+      <div class="alert error">
+        <strong>Error:</strong> {{ error }}
+      </div>
+      {% endif %}
+
+      {% if result %}
+      <section class="result-card">
+        <h2>Assessment Result</h2>
+        <div class="stats">
+          <div>
+            <span class="label">Category</span>
+            <strong>{{ result.category.value }}</strong>
+          </div>
+          <div>
+            <span class="label">Grade</span>
+            <strong>{{ result.grade.value }}</strong>
+          </div>
+          <div>
+            <span class="label">Score</span>
+            <strong>{{ '%.1f' % result.score }}/100</strong>
+          </div>
+        </div>
+
+        <div class="result-grid">
+          <div>
+            <h3>Passing Parameters</h3>
+            {% if result.passing_parameters %}
+            <ul>
+              {% for item in result.passing_parameters %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>None</p>
+            {% endif %}
+          </div>
+
+          <div>
+            <h3>Failing Parameters</h3>
+            {% if result.failing_parameters %}
+            <ul>
+              {% for item in result.failing_parameters %}
+              <li>{{ item }}</li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p>None</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="recommendations">
+          <h3>Recommendations</h3>
+          <ul>
+            {% for item in result.recommendations %}
+            <li>{{ item }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+      {% endif %}
+    </div>
+  </body>
+</html>
