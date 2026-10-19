@@ -8,6 +8,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ServiceInfo;
 import android.database.Cursor;
+import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -47,7 +49,7 @@ public class ResponderService extends Service {
     String lastNumber = "";
     boolean scheduled = false;
     boolean weAnswered = false;
-    int savedMusicVol = -1;
+    int savedCallVol = -1;
 
     final Runnable answerTask = new Runnable() {
         @Override public void run() {
@@ -81,6 +83,10 @@ public class ResponderService extends Service {
             if (status == TextToSpeech.SUCCESS) {
                 int r = tts.setLanguage(new Locale("en", "IN"));
                 if (r < 0) tts.setLanguage(Locale.ENGLISH);
+                tts.setAudioAttributes(new AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build());
                 tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                     @Override public void onStart(String id) { log("TTS speaking " + id); }
                     @Override public void onError(String id) { log("TTS ERROR " + id); h.post(hangup); }
@@ -129,7 +135,7 @@ public class ResponderService extends Service {
         } else if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
             log("Call connected, weAnswered=" + weAnswered);
             if (weAnswered) {
-                h.postDelayed(this::speakMessage, 800);
+                h.postDelayed(this::speakMessage, 1500);
                 h.postDelayed(hangup, MAX_CALL_MS);
             }
         } else if (state == TelephonyManager.CALL_STATE_IDLE) {
@@ -148,15 +154,44 @@ public class ResponderService extends Service {
             log("Cannot speak: answered=" + weAnswered + " ttsReady=" + ttsReady);
             return;
         }
+        routeToSpeaker();
+        // give the phone a moment to switch to the loudspeaker
+        h.postDelayed(this::doSpeak, 800);
+    }
+
+    void routeToSpeaker() {
         try {
+            if (Build.VERSION.SDK_INT >= 31) {
+                boolean ok = false;
+                for (AudioDeviceInfo d : am.getAvailableCommunicationDevices()) {
+                    if (d.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+                        ok = am.setCommunicationDevice(d);
+                        break;
+                    }
+                }
+                log("setCommunicationDevice(speaker)=" + ok);
+            }
             am.setSpeakerphoneOn(true);
-            savedMusicVol = am.getStreamVolume(AudioManager.STREAM_MUSIC);
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0);
-        } catch (Exception ignored) { }
+            log("speakerphoneOn=" + am.isSpeakerphoneOn());
+        } catch (Exception e) {
+            log("speaker ERROR: " + e.getMessage());
+        }
+        try {
+            savedCallVol = am.getStreamVolume(AudioManager.STREAM_VOICE_CALL);
+            am.setStreamVolume(AudioManager.STREAM_VOICE_CALL,
+                    am.getStreamMaxVolume(AudioManager.STREAM_VOICE_CALL), 0);
+            log("call volume set to max");
+        } catch (Exception e) {
+            log("volume ERROR: " + e.getMessage());
+        }
+    }
+
+    void doSpeak() {
+        if (!weAnswered) return;
         String text = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE)
                 .getString(MainActivity.KEY_MSG, MainActivity.DEFAULT_MSG);
         Bundle p = new Bundle();
-        p.putString(TextToSpeech.Engine.KEY_PARAM_STREAM, String.valueOf(AudioManager.STREAM_MUSIC));
+        p.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1.0f);
         int rc = tts.speak(text, TextToSpeech.QUEUE_FLUSH, p, "m1");
         log("speak() result=" + rc + " (0 = OK)");
         tts.playSilentUtterance(700, TextToSpeech.QUEUE_ADD, "gap");
@@ -171,9 +206,10 @@ public class ResponderService extends Service {
 
     void restoreAudio() {
         try {
+            if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice();
             am.setSpeakerphoneOn(false);
-            if (savedMusicVol >= 0) am.setStreamVolume(AudioManager.STREAM_MUSIC, savedMusicVol, 0);
-            savedMusicVol = -1;
+            if (savedCallVol >= 0) am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, savedCallVol, 0);
+            savedCallVol = -1;
         } catch (Exception ignored) { }
     }
 

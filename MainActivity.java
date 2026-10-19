@@ -16,6 +16,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.speech.tts.TextToSpeech;
+import java.util.Locale;
 
 public class MainActivity extends Activity {
     static final String PREFS = "cr";
@@ -39,7 +41,7 @@ public class MainActivity extends Activity {
         root.setPadding(pad, pad * 2, pad, pad);
 
         TextView title = new TextView(this);
-        title.setText("CallResponder");
+        title.setText("CallResponder v2");
         title.setTextSize(24);
         root.addView(title);
 
@@ -72,6 +74,11 @@ public class MainActivity extends Activity {
         });
         root.addView(batt);
 
+        Button test = new Button(this);
+        test.setText("TEST VOICE NOW (no call)");
+        test.setOnClickListener(v -> testVoice());
+        root.addView(test);
+
         Button refresh = new Button(this);
         refresh.setText("Refresh call log");
         refresh.setOnClickListener(v -> showLog());
@@ -89,6 +96,25 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         showLog();
+    }
+
+    TextToSpeech testTts;
+
+    void testVoice() {
+        final String text = msg.getText().toString();
+        ResponderService.appendLog(this, "TEST: starting voice test");
+        if (testTts != null) { testTts.shutdown(); testTts = null; }
+        testTts = new TextToSpeech(this, status -> {
+            ResponderService.appendLog(this, "TEST: TTS init status=" + status + " (0 = OK)");
+            if (status == TextToSpeech.SUCCESS) {
+                int lr = testTts.setLanguage(new Locale("en", "IN"));
+                ResponderService.appendLog(this, "TEST: setLanguage result=" + lr + " (-1/-2 = not available)");
+                if (lr < 0) testTts.setLanguage(Locale.ENGLISH);
+                int rc = testTts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "test");
+                ResponderService.appendLog(this, "TEST: speak() result=" + rc + " (0 = OK)");
+            }
+            runOnUiThread(this::showLog);
+        });
     }
 
     void showLog() {
